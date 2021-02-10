@@ -7,6 +7,10 @@
 var restApi;
 var mode = "";
 var metadata;
+var roomId = "";
+var forwardStreams = new Array();
+var recordings = new Array();
+
 var ENUMERATE = {
   SERVICE: "service",
   ROOM: "room",
@@ -106,6 +110,105 @@ function a_click(nowList, dom) {
       checkProfile(renderCluster);
       break;
   }
+}
+
+
+function record_click() {
+    var i;
+    recordings = new Array();
+     for (i = 0; i< forwardStreams.length; i++) {
+      restApi.recordStream(roomId, "auto", forwardStreams[i], forwardStreams[i], (err,resp)=>{
+         if (err) {
+            return notify('error', 'Failed to start recording', err);
+       } else {
+           var recording = JSON.parse(resp);
+           recordings.push(recording);
+         }//end else
+      });
+    }//end for
+}
+
+function record_click_mp4() {
+    var i;
+    recordings = new Array();
+     for (i = 0; i< forwardStreams.length; i++) {
+      restApi.recordStreamMp4(roomId,  forwardStreams[i], forwardStreams[i], (err,resp)=>{
+         if (err) {
+            return notify('error', 'Failed to start recording', err);
+       } else {
+           var recording = JSON.parse(resp);
+           recordings.push(recording);
+         }//end else
+      });
+    }//end for
+}
+
+
+function stop_record_click() {
+   if (restApi ==='undefined') {
+      return;
+      } else {
+        //get all available recordings for current room
+        restApi.getRecordings(roomId, (err,resp) => {
+        if (err) {
+        return notify('error', 'Failed to get recordings', err);
+        } else {
+        let recordingsObject = JSON.parse(resp);
+        var i;
+        recordings = new Array();
+        for (i = 0; i < recordingsObject.length; i++){
+            recordings.push(recordingsObject[i].id);
+            }
+        //check if there are some recordings here
+	     if (recordings.length > 0){
+         var i = 0;
+         for(i=0;i<recordings.length;i++){
+           restApi.stopRecording(roomId, recordings[i], (err,resp)=>{
+           if (err) {
+            return notify('error', 'Failed to stop recording', err);
+            } else {
+             var r = resp;
+               }//end else
+              });
+             }//end for
+            }//end if
+           }//end else
+        });
+     }//end else
+}
+
+
+function get_streams_click() {
+  
+  if (restApi ==='undefined') { 
+
+    return;
+
+    }else{
+     // get roomId (assuming there is just one)
+     restApi.listRooms((err,resp)=>{
+       if (err) {
+        return notify('error', 'Failed to list rooms', err);
+       } else {
+        let roomObject = JSON.parse(resp);
+        roomId = roomObject[0]._id;
+        // get forward streams
+        restApi.getStreams(roomId, (err, resp) => {
+          if (err) {
+            return notify('error', 'Failed to get streams', err);
+          }
+         let streams = JSON.parse(resp);
+         var i;
+         forwardStreams = new Array();
+         for (i = 0; i < streams.length; i++){
+           if ( streams[i].type === 'forward') {
+              forwardStreams.push(streams[i].id);
+            }
+          }      
+         });        
+       }//end else
+      }); 
+  }//end else
 }
 
 var login = new Promise((resolve, reject) => {

@@ -193,3 +193,35 @@ ManagementApi.prototype.deleteService = function (serviceId, callback) {
     serviceId = serviceId || null;
     this.send('DELETE', undefined, 'services/' + serviceId, callback);
 };
+
+//Aleks added
+//returns a list of available streams for particular roomId
+ManagementApi.prototype.getStreams = function (roomId, callback) {
+    roomId = roomId || null;
+    this.send('GET', undefined, 'v1/rooms/' + roomId + '/streams', callback);
+};
+//List the rooms in your service. 
+ManagementApi.prototype.listRooms = function (callback) {
+    
+    this.send('GET', undefined, 'v1/rooms' , callback);
+};
+//Start recording of the stream
+//body example: { "container":"auto","media":{"audio": {"from": "831215790890702300"},
+//    "video": {      "from": "831215790890702300"    }  }}
+ManagementApi.prototype.recordStream = function(roomId, containerType, audioStreamId, videoStreamId, callback){
+   this.send('POST', {container:containerType, media:{audio:{from:audioStreamId},video:  	{from:videoStreamId}}}, 'v1/rooms/' + roomId + '/recordings', callback);    
+};
+//Need to find correct function to record mp4
+ManagementApi.prototype.recordStreamMp4 = function(roomId, audioStreamId, videoStreamId, callback){
+   this.send('POST', {container:'mp4', media:{audio:{from:audioStreamId, format:{codec:'aac'}}, video:  	{from:videoStreamId, format:{codec:'h264'}}}}, 'v1/rooms/' + roomId + '/recordings', callback);    
+};
+
+//Stop recording
+ManagementApi.prototype.stopRecording = function(roomId, recordingId, callback) {
+  this.send('DELETE', undefined, 'v1/rooms/'+ roomId + '/recordings/'+recordingId , callback);
+}
+
+//Get current recordings for room
+ManagementApi.prototype.getRecordings = function(roomId, callback) {
+  this.send('GET', undefined, 'v1/rooms/'+ roomId + '/recordings' , callback);
+}
